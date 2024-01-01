@@ -31,8 +31,8 @@ data "cloudinit_config" "bastion_host_configuration" {
 		content_type = "text/cloud-config"
 		content = templatefile("${local.bastion-host-cloud-init-config-file}",
 			{
-				username		= "${var.ssh-username}"
-				# We do not need to pass the public key when using OS Login
+				# We do not need to pass the username or public key when using OS Login
+				#username		= "${var.ssh-username}"
 				#ssh-public-key		= "${file(var.ssh-public-key-file)}"
 			}
 		)

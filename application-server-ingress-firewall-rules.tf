@@ -32,7 +32,7 @@ resource "google_compute_firewall" "allow-ingress-http-bastion-host-to-applicati
 
 	allow {
 		protocol	= "tcp"
-		ports		= ["${var.mutillidae-http-port}","${var.mysql-admin-http-port}","${var.ldap-admin-http-port}"]
+		ports		= ["${var.dragonfly-http-port}"]
 	}
 
 	source_tags	= ["bastion-host"]
@@ -75,7 +75,7 @@ resource "google_compute_firewall" "allow-ingress-web-health-check-to-applicatio
 
 	allow {
 		protocol	= "tcp"
-		ports		= ["${var.mutillidae-http-port}","${var.mysql-admin-http-port}","${var.ldap-admin-http-port}"]
+		ports		= ["${var.dragonfly-http-port}"]
 	}
 
 	source_ranges	= "${var.gcp-health-check-ip-address-range}"

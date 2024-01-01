@@ -13,3 +13,9 @@ resource "google_project_service" "containeranalysis-service" {
 	disable_dependent_services	= "true"
 }
 
+resource "google_project_service" "container-service" {
+	project				= "${var.project}"
+	service				= "container.googleapis.com"
+	disable_on_destroy		= "true"
+	disable_dependent_services	= "true"
+}

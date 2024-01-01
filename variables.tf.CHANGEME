@@ -114,6 +114,11 @@ variable "ntp-port" {
 	default = "123"
 }
 
+variable "dragonfly-http-port" {
+	type = string
+	default = "80"
+}
+
 variable "vm-machine-type" {
 	type = string
 	default = "e2-small"
