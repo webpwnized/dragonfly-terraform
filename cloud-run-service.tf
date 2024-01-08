@@ -30,7 +30,7 @@ resource "google_cloud_run_v2_service" "cloud-run-service" {
     location        = "${var.region}"
     labels          = "${local.cloud-run-service-labels}"
     ingress         = "INGRESS_TRAFFIC_ALL"
-    depends_on      = [ "google_project_service.cloud-run-service" ]
+    depends_on      = [ google_project_service.cloud-run-service ]
     
     template {
         service_account = google_service_account.cloud-run-service-service-account.email
