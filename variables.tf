@@ -79,7 +79,7 @@ variable "bastion-host-subnet-ip-address-range" {
 	default = "10.0.0.0/28"
 }
 
-variable "application-server-subnet-ip-address-range" {
+variable "cloud-run-service-subnet-ip-address-range" {
 	type = string
 	default = "10.0.1.0/28"
 }
