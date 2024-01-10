@@ -7,13 +7,12 @@ locals {
 	cloud-run-service-subnetwork-name	= "${google_compute_subnetwork.gcp-vpc-cloud-run-service-subnetwork.name}"
 	
 	//Make sure these are set for this machine
-    cloud-run-repository-name               = "dragonfly"
-    cloud-run-repository-container-name     = "www"
-    cloud-run-image-location                = "${var.region}-docker.pkg.dev/${var.project}/${local.cloud-run-repository-name}/${local.cloud-run-repository-container-name}"
+    cloud-run-repository-name           = "webpwnized"
+    cloud-run-repository-container-name = "dragonfly"
+    cloud-run-repository-container-tag  = "www"
+    cloud-run-image-location            = "${var.region}-docker.pkg.dev/${var.project}/${google_artifact_registry_repository.remote-dockerhub-repository.name}/${local.cloud-run-repository-name}/${local.cloud-run-repository-container-name}:${local.cloud-run-repository-container-tag}"
 	cloud-run-service-name 			    = "${var.application-name}-cloud-run-service"
-	cloud-run-service-network-ip		= "10.0.0.5"
 	cloud-run-service-tags 			    = ["cloud-run-service"]
-	cloud-run-service-disk-size-gb		= 10
 	cloud-run-service-description		= "A jump server to allow access to other IaaS on the ${local.cloud-run-service-subnetwork-name} subnet"
 	cloud-run-service-labels 			= "${merge(
                                             tomap({ 
@@ -22,6 +21,14 @@ locals {
                                             }),
                                             var.default-labels)
                                         }"
+}
+
+resource "google_cloud_run_v2_service_iam_member" "cloud-run-iam-member" {
+    project		= "${var.project}"
+    location    = "${var.region}"
+    name        = "${google_cloud_run_v2_service.cloud-run-service.name}"     
+    member      = "allUsers"
+    role        = "roles/run.invoker"
 }
 
 resource "google_cloud_run_v2_service" "cloud-run-service" {
@@ -40,7 +47,7 @@ resource "google_cloud_run_v2_service" "cloud-run-service" {
             name = "${local.cloud-run-service-name}-container"
             image = "${local.cloud-run-image-location}"
             ports {
-                name        = "h2c"
+                name            = "h2c"
                 container_port  = "80"
             }        
         }
@@ -51,4 +58,10 @@ resource "google_cloud_run_v2_service" "cloud-run-service" {
         }
 
     }
+}
+
+output "cloud-run-service-uri" {
+	value		= "${google_cloud_run_v2_service.cloud-run-service.uri}"
+	description	= "The main URI in which this Service is serving traffic."
+	sensitive	= "false"
 }

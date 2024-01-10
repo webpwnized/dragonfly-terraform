@@ -1,4 +1,5 @@
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository
+# https://medium.com/google-cloud/docker-hub-remote-repositories-in-gcp-347cfea55c80f
 
 locals {
 	// These default values should work without changes
@@ -24,9 +25,10 @@ resource "google_artifact_registry_repository" "remote-dockerhub-repository" {
     project		    = "${var.project}"
     location        = "${var.region}"
     description     = "${local.repository-description}"
-    repository_id   = "${local.dockerhub-repository-name}"
+    repository_id   = "${local.repository-name}"
     format          = "DOCKER"
-    mode            = "REMOTE_REPOSITORY" 
+    mode            = "REMOTE_REPOSITORY"
+    #name            = "${local.repository-name}"
 
     cleanup_policies {
         id                      = "Keep-Latest-Version"
@@ -40,7 +42,13 @@ resource "google_artifact_registry_repository" "remote-dockerhub-repository" {
     remote_repository_config {
         description = "${local.repository-description}"
         docker_repository {
-            public_repository = "DOCKER_HUB"
+            public_repository =   "DOCKER_HUB"
         }
     }
+}
+
+output "remote-dockerhub-repository-name" {
+	value		= "${google_artifact_registry_repository.remote-dockerhub-repository.name}"
+	description	= "The name of the repository"
+	sensitive	= "false"
 }
