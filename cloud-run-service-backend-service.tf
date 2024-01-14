@@ -12,10 +12,8 @@ resource "google_compute_backend_service" "cloud-run-backend-service" {
 	project							= "${local.cloud-run-backend-service-project}"
 	name							= "${local.cloud-run-backend-service-name}"
 	description						= "The Cloud Run backend service"
-	timeout_sec						= 60
 	connection_draining_timeout_sec	= 30
 	enable_cdn						= false
-	port_name						= "cloud-run-http-port"
 	protocol						= "HTTP"
 	load_balancing_scheme			= "EXTERNAL_MANAGED"
 	custom_response_headers			= ["Proxied-By: Google Cloud Load Balancer"]
@@ -24,11 +22,7 @@ resource "google_compute_backend_service" "cloud-run-backend-service" {
 	
 	backend {
 		group			= "${google_compute_region_network_endpoint_group.cloud-run-network-endpoint-group.id}"
-		balancing_mode	= "UTILIZATION"
-		max_utilization	= 0.80
 	}
-	
-	health_checks	= ["${google_compute_health_check.cloud-run-health-check.id}"]
 	
 	log_config {
 		enable		= "true"

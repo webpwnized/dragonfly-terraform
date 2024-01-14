@@ -28,7 +28,7 @@ resource "google_cloud_run_v2_service" "cloud-run-service" {
     name            = "${local.cloud-run-service-name}"
     location        = "${var.region}"
     labels          = "${local.cloud-run-service-labels}"
-    ingress         = "INGRESS_TRAFFIC_ALL"
+    ingress         = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
     depends_on      = [ google_project_service.cloud-run-service ]
     
     template {
