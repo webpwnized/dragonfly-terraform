@@ -23,14 +23,6 @@ locals {
                                         }"
 }
 
-resource "google_cloud_run_v2_service_iam_member" "cloud-run-iam-member" {
-    project		= "${var.project}"
-    location    = "${var.region}"
-    name        = "${google_cloud_run_v2_service.cloud-run-service.name}"     
-    member      = "allUsers"
-    role        = "roles/run.invoker"
-}
-
 resource "google_cloud_run_v2_service" "cloud-run-service" {
     project		    = "${var.project}"
     name            = "${local.cloud-run-service-name}"
@@ -47,9 +39,32 @@ resource "google_cloud_run_v2_service" "cloud-run-service" {
             name = "${local.cloud-run-service-name}-container"
             image = "${local.cloud-run-image-location}"
             ports {
-                name            = "h2c"
+                name            = "http1"
                 container_port  = "80"
-            }        
+            }
+
+            startup_probe{
+                initial_delay_seconds   = 0
+                timeout_seconds         = 1
+                period_seconds          = 10
+                failure_threshold       = 3
+                http_get {
+                    path    = "/"
+                    port    = 80
+                }
+            }
+
+            liveness_probe{
+                initial_delay_seconds   = 0
+                timeout_seconds         = 1
+                period_seconds          = 10
+                failure_threshold       = 3
+                http_get {
+                    path    = "/"
+                    port    = 80
+                }
+            }
+
         }
 
         scaling {
@@ -58,10 +73,29 @@ resource "google_cloud_run_v2_service" "cloud-run-service" {
         }
 
     }
+
 }
 
 output "cloud-run-service-uri" {
 	value		= "${google_cloud_run_v2_service.cloud-run-service.uri}"
 	description	= "The main URI in which this Service is serving traffic."
+	sensitive	= "false"
+}
+
+output "cloud-run-service-latest-ready-revision" {
+	value		= "${google_cloud_run_v2_service.cloud-run-service.latest_ready_revision}"
+	description	= "Name of the latest revision that is serving traffic. See comments in reconciling for additional information on reconciliation process in Cloud Run."
+	sensitive	= "false"
+}
+
+output "cloud-run-service-latest-created-revision" {
+	value		= "${google_cloud_run_v2_service.cloud-run-service.latest_created_revision}"
+	description	= "Name of the last created revision. See comments in reconciling for additional information on reconciliation process in Cloud Run."
+	sensitive	= "false"
+}
+
+output "cloud-run-service-traffic-statuses" {
+	value		= "${google_cloud_run_v2_service.cloud-run-service.traffic_statuses}"
+	description	= "Detailed status information for corresponding traffic targets. See comments in reconciling for additional information on reconciliation process in Cloud Run. Structure is documented below."
 	sensitive	= "false"
 }
