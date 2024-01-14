@@ -34,7 +34,7 @@ locals {
 	security-policy-owasp-rules-3	= "evaluatePreconfiguredExpr('cve-canary') || evaluatePreconfiguredExpr('methodenforcement-v33-stable') || evaluatePreconfiguredExpr('scannerdetection-v33-stable') || evaluatePreconfiguredExpr('json-sqli-canary')"
 }
 
-resource "google_compute_security_policy" "security-policy" {
+resource "google_compute_security_policy" "cloud-armor-security-policy" {
 	project		= "${local.security-policy-project}"
 	name		= "${local.security-policy-name}"
 	description	= "${local.security-policy-description}"
@@ -72,17 +72,17 @@ resource "google_compute_security_policy" "security-policy" {
 		}
 	}
 	
-	rule {
-		description	= "Allow access to Load Balancer from office"
-		action		= "allow"
-		priority	= "1003"
-		match {
-			versioned_expr	= "SRC_IPS_V1"
-			config {
-				src_ip_ranges	= "${var.admin-office-ip-address-range}"
-			}
-		}
-	}
+	# rule {
+	#	description	= "Allow access to Load Balancer from office"
+	#	action		= "allow"
+	#	priority	= "1003"
+	#	match {
+	#		versioned_expr	= "SRC_IPS_V1"
+	#		config {
+	#			src_ip_ranges	= "${var.admin-office-ip-address-range}"
+	#		}
+	#	}
+	# }
 
 	rule {
 		description	= "Default rule. Deny all access to Load Balancer"

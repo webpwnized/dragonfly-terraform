@@ -7,7 +7,7 @@ locals {
 	
 	//Make sure these are set for this machine
     cloud-run-neg-name              = "cloud-run-network-endpoint-group"
-    cloud-run-service-description	= "A network endpoint group for the Cloud Run Service on the ${local.cloud-run-service-subnetwork-name} subnet"
+    cloud-run-service-neg-description	= "A network endpoint group for the Cloud Run Service on the ${local.cloud-run-service-subnetwork-name} subnet"
 }
 
 resource "google_compute_region_network_endpoint_group" "cloud-run-network-endpoint-group" {
@@ -23,8 +23,8 @@ resource "google_compute_region_network_endpoint_group" "cloud-run-network-endpo
 
 }
 
-output "cloud-run-network-endpoint-group-size" {
-	value		= "${google_cloud_run_v2_service.cloud-run-network-endpoint-group.size}"
-	description	= "Number of network endpoints in the network endpoint group."
+output "cloud-run-network-endpoint-group-self-link" {
+	value		= "${google_compute_region_network_endpoint_group.cloud-run-network-endpoint-group.self_link}"
+	description	= "The URI of the created resource."
 	sensitive	= "false"
 }
