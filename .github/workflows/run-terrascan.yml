@@ -12,8 +12,8 @@ jobs:
         name: terrascan-action
         runs-on: ubuntu-latest
         steps:
-            - name: Checkout code
-              uses: actions/checkout@v3
+            - name: Checkout repo
+              uses: actions/checkout@master
 
             - name: Run Terrascan
               id: terrascan
@@ -28,6 +28,6 @@ jobs:
                 verbose: true
 
             - name: Upload Terraform scan results to GitHub Security tab
-              uses: github/codeql-action/upload-sarif@v2
+              uses: github/codeql-action/upload-sarif@v3
               with:
                 sarif_file: 'terrascan.sarif'
