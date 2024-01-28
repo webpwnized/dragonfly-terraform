@@ -1,0 +1,33 @@
+name: run-terrascan
+
+on:
+    push:
+      branches:
+        - main
+        - development
+    pull_request:
+
+jobs:
+    terrascan_job:
+        name: terrascan-action
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Run Terrascan
+              id: terrascan
+              uses: tenable/terrascan-action@main
+              with:
+                iac_type: 'terraform'
+                iac_dir: '.'
+                iac_version: 'v14'
+                policy_type: 'gcp'
+                only_warn: true
+                sarif_upload: true
+                verbose: true
+
+            - name: Upload Terraform scan results to GitHub Security tab
+              uses: github/codeql-action/upload-sarif@v2
+              with:
+                sarif_file: 'terrascan.sarif'
