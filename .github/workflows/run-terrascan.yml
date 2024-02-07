@@ -32,6 +32,6 @@ jobs:
                 verbose: true
 
             - name: Upload Terraform scan results to GitHub Security tab
-              uses: github/codeql-action/upload-sarif@v3
+              uses: github/codeql-action/upload-sarif@main
               with:
                 sarif_file: 'terrascan.sarif'
