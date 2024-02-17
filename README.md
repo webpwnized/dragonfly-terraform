@@ -9,13 +9,14 @@
 
 ## Installation Instructions for Google Cloud (GCP)
 
-# TODO
+Copy the project
 
-## Files used to create the reference Bastion Host for Google Cloud (GCP)
-
-The [**files needed**](./README-BASTION-HOST.md) to create the reference Bastion Host for Google Cloud Platform (GCP) are in the [**README-BASTION-HOST.md**](./README-BASTION-HOST.md)
+    git clone https://github.com/webpwnized/dragonfly-terraform.git
 
 ## How to deploy the Google Cloud (GCP) project with Terraform
 
+Change into the terraform directory, then run Terraform
+
+    cd terraform
 	terraform plan
 	terraform apply
