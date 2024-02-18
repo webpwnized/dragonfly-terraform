@@ -17,6 +17,6 @@ Copy the project
 
 Change into the terraform directory, then run Terraform
 
-    cd terraform
+    cd dragonfly-terraform/terraform
 	terraform plan
 	terraform apply
