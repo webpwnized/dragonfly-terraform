@@ -1,5 +1,5 @@
 # Name of this GitHub Actions workflow.
-name: Scan Dockerfiles with Semgrep SAST
+name: Scan Terraform with Semgrep SAST
 
 on: # trigger
   # Run Semgrep when a pull request is opened or updated.
@@ -16,7 +16,7 @@ on: # trigger
 jobs: 
   semgrep:
     # Display name for this GitHub Actions job.
-    name: Scan Dockerfiles with Semgrep SAST
+    name: Scan Terraform with Semgrep SAST
 
     # GitHub provisions an Ubuntu runner to host the Semgrep container.
     runs-on: ubuntu-latest #agent pool
@@ -54,7 +54,7 @@ jobs:
             --error \
             terraform
 
-      # Run the broader Dockerfiles Community ruleset in audit mode.
+      # Run the broader Terraform Community ruleset in audit mode.
       # always() ensures the audit scan still runs when the blocking scan
       # detects a finding and returns a nonzero exit code.
       # Audit findings are reported but do not cause the job to fail.
