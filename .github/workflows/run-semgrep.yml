@@ -52,7 +52,7 @@ jobs:
             --sarif \
             --output semgrep-blocking-results.sarif \
             --error \
-            .build
+            terraform
 
       # Run the broader Dockerfiles Community ruleset in audit mode.
       # always() ensures the audit scan still runs when the blocking scan
@@ -65,7 +65,7 @@ jobs:
             --config p/terraform \
             --sarif \
             --output semgrep-audit-results.sarif \
-            .build
+            terraform
         continue-on-error: true
 
       # Publish blocking findings to GitHub Code Scanning.
