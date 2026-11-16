@@ -50,7 +50,7 @@ resource "google_cloud_run_v2_service" "cloud-run-service" {
                 period_seconds          = 10
                 failure_threshold       = 3
                 http_get {
-                    path    = "/"
+                    path    = "/health.php"
                     port    = 80
                 }
             }
@@ -61,17 +61,19 @@ resource "google_cloud_run_v2_service" "cloud-run-service" {
                 period_seconds          = 10
                 failure_threshold       = 3
                 http_get {
-                    path    = "/"
+                    path    = "/health.php"
                     port    = 80
                 }
             }
 
         }
 
-        scaling {
-            min_instance_count  = 1
-            max_instance_count  = 3
-        }
+	max_instance_request_concurrency = 1
+
+	scaling {
+	  min_instance_count = 5
+	  max_instance_count = 30
+	}
 
     }
 
