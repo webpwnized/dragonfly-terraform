@@ -1,10 +1,11 @@
-# Keep workflow actions, Terraform dependencies, and pre-commit hooks current.
+# Maintain dependencies independently on main and development.
 version: 2
 
 updates:
-  # Update action references in .github/workflows/.
+  # GitHub Actions updates for main.
   - package-ecosystem: github-actions
     directory: /
+    target-branch: main
     schedule:
       interval: weekly
     groups:
@@ -12,9 +13,21 @@ updates:
         patterns:
           - "*"
 
-  # Update Terraform provider constraints and supported module references.
+  # GitHub Actions updates for development.
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: development
+    schedule:
+      interval: weekly
+    groups:
+      workflow-actions:
+        patterns:
+          - "*"
+
+  # Terraform provider and module updates for main.
   - package-ecosystem: terraform
     directory: /terraform
+    target-branch: main
     schedule:
       interval: weekly
     groups:
@@ -22,8 +35,27 @@ updates:
         patterns:
           - "*"
 
-  # Update hook revisions in .pre-commit-config.yaml.
+  # Terraform provider and module updates for development.
+  - package-ecosystem: terraform
+    directory: /terraform
+    target-branch: development
+    schedule:
+      interval: weekly
+    groups:
+      terraform-dependencies:
+        patterns:
+          - "*"
+
+  # Pre-commit hook updates for main.
   - package-ecosystem: pre-commit
     directory: /
+    target-branch: main
+    schedule:
+      interval: weekly
+
+  # Pre-commit hook updates for development.
+  - package-ecosystem: pre-commit
+    directory: /
+    target-branch: development
     schedule:
       interval: weekly
