@@ -1,0 +1,29 @@
+# Keep workflow actions, Terraform dependencies, and pre-commit hooks current.
+version: 2
+
+updates:
+  # Update action references in .github/workflows/.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      workflow-actions:
+        patterns:
+          - "*"
+
+  # Update Terraform provider constraints and supported module references.
+  - package-ecosystem: terraform
+    directory: /terraform
+    schedule:
+      interval: weekly
+    groups:
+      terraform-dependencies:
+        patterns:
+          - "*"
+
+  # Update hook revisions in .pre-commit-config.yaml.
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
