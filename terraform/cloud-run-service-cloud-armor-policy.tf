@@ -1,111 +1,269 @@
-
-# https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_security_policy
-# https://cloud.google.com/armor/docs/configure-security-policies
-# https://cloud.google.com/armor/docs/rules-language-reference
-# https://cloud.google.com/armor/docs/rule-tuning#crs-3.3
-# https://cloud.google.com/armor/quotas
+# Cloud Armor WAF policy for the public Dragonfly workshop.
+#
+# Documentation:
+# https://cloud.google.com/armor/docs/waf-rules
+# https://cloud.google.com/armor/docs/rule-tuning
 # https://cloud.google.com/armor/docs/request-logging
-
-# 	Filter: jsonPayload.enforcedSecurityPolicy.outcome="DENY"
-#	Filter: jsonPayload.remoteIp="<YOUR IP ADDRESS>"
-#	Search for: preconfiguredExprIds
-#	Example exceptions: evaluatePreconfiguredExpr('sqli-v33-stable', ['owasp-crs-v030301-id942251-sqli', 'owasp-crs-v030301-id942490-sqli', 'owasp-crs-v030301-id942420-sqli', 'owasp-crs-v030301-id942431-sqli', 'owasp-crs-v030301-id942460-sqli', 'owasp-crs-v030301-id942101-sqli', 'owasp-crs-v030301-id942511-sqli', 'owasp-crs-v030301-id942421-sqli', 'owasp-crs-v030301-id942432-sqli', 'owasp-crs-v030301-id942330-sqli', 'owasp-crs-v030301-id942300-sqli', 'owasp-crs-v030301-id942310-sqli', 'owasp-crs-v030301-id942340-sqli', 'owasp-crs-v030301-id942370-sqli', 'owasp-crs-v030301-id942430-sqli', 'owasp-crs-v030301-id942440-sqli', 'owasp-crs-v030301-id942110-sqli'])
-#	Example Exceptions: evaluatePreconfiguredExpr('xss-v33-stable', ['owasp-crs-v030301-id941330-xss', 'owasp-crs-v030301-id941340-xss'])
-#	Example Exceptions: evaluatePreconfiguredExpr('protocolattack-v33-stable', ['owasp-crs-v030301-id921150-protocolattack', 'owasp-crs-v030301-id921120-protocolattack'])
-
-
-# GCP imposes restrictions on policies
-# 10 security policies per project
-# 200 security rules per project across all security policies
-# 20 rules with an advanced match condition across all security policies per project
+#
+# Enforcement:
+# - All documented CRS 4.22 rule families are enabled.
+# - Sensitivity 4 includes signatures at levels 1 through 4.
+# - Every matching WAF rule immediately denies the request with HTTP 403.
+# - No signatures are excluded.
+# - The default rule allows anonymous workshop access after WAF evaluation.
+#
+# Troubleshooting:
+# Lower priority numbers are evaluated first.
+# Each rule family has its own priority for easier investigation.
+#
+# Logs Explorer filter:
+# jsonPayload.enforcedSecurityPolicy.outcome="DENY"
+#
+# Inspect:
+# jsonPayload.enforcedSecurityPolicy.priority
+# jsonPayload.enforcedSecurityPolicy.preconfiguredExprIds
+#
+# Backend service request logging must also be enabled.
+# Check the project's current Cloud Armor quotas before applying.
 
 locals {
-	security-policy-project		= "${google_compute_network.gcp_vpc_network.project}"
-	security-policy-name		= "${google_compute_network.gcp_vpc_network.name}-security-policy"
-	security-policy-description	= "Cloud Armor security policy"
-
-	# Example of excluding specific rules in a policy if a specific rule causes an issue
-	# security-policy-owasp-rules-1	= "evaluatePreconfiguredExpr('sqli-v33-stable', ['owasp-crs-v030301-id942330-sqli', 'owasp-crs-v030301-id942421-sqli', 'owasp-crs-v030301-id942432-sqli', 'owasp-crs-v030301-id942110-sqli', 'owasp-crs-v030301-id942420-sqli']) || evaluatePreconfiguredExpr('xss-v33-stable', ['owasp-crs-v030301-id941330-xss']) || evaluatePreconfiguredExpr('lfi-v33-stable') || evaluatePreconfiguredExpr('rfi-v33-stable') || evaluatePreconfiguredExpr('rce-v33-stable')"
-	
-	security-policy-owasp-rules-1	= "evaluatePreconfiguredExpr('sqli-v33-stable') || evaluatePreconfiguredExpr('xss-v33-stable') || evaluatePreconfiguredExpr('lfi-v33-stable') || evaluatePreconfiguredExpr('rfi-v33-stable') || evaluatePreconfiguredExpr('rce-v33-stable')"
-
-	security-policy-owasp-rules-2	= "evaluatePreconfiguredExpr('protocolattack-v33-stable') || evaluatePreconfiguredExpr('php-v33-stable') || evaluatePreconfiguredExpr('sessionfixation-v33-stable') || evaluatePreconfiguredExpr('java-v33-stable') || evaluatePreconfiguredExpr('nodejs-v33-stable')"
-
-	security-policy-owasp-rules-3	= "evaluatePreconfiguredExpr('cve-canary') || evaluatePreconfiguredExpr('methodenforcement-v33-stable') || evaluatePreconfiguredExpr('scannerdetection-v33-stable') || evaluatePreconfiguredExpr('json-sqli-canary')"
+  security-policy-project     = google_compute_network.gcp_vpc_network.project
+  security-policy-name        = "${google_compute_network.gcp_vpc_network.name}-security-policy"
+  security-policy-description = "Dragonfly workshop WAF with full CRS 4.22 signature coverage"
 }
 
 resource "google_compute_security_policy" "cloud-armor-security-policy" {
-	project		= "${local.security-policy-project}"
-	name		= "${local.security-policy-name}"
-	description	= "${local.security-policy-description}"
+  project     = local.security-policy-project
+  name        = local.security-policy-name
+  description = local.security-policy-description
 
-	rule {
-		description	= "Block access if OWASP rule triggered"
-		action		= "deny(403)"
-		priority	= "1000"
-		match {
-			expr {
-				expression = "${local.security-policy-owasp-rules-1}"
-			}
-		}
-	}
+  # Configure request-body inspection for the WAF.
+  advanced_options_config {
+    # Inspect JSON request bodies using their parsed structure.
+    json_parsing = "STANDARD"
 
-	rule {
-		description	= "Block access if OWASP rule triggered"
-		action		= "deny(403)"
-		priority	= "1001"
-		match {
-			expr {
-				expression = "${local.security-policy-owasp-rules-2}"
-			}
-		}
-	}
-	
-	rule {
-		description	= "Block access if OWASP rule triggered"
-		action		= "deny(403)"
-		priority	= "1002"
-		match {
-			expr {
-				expression = "${local.security-policy-owasp-rules-3}"
-			}
-		}
-	}
-	
-	# rule {
-	#	description	= "Allow access to Load Balancer from office"
-	#	action		= "allow"
-	#	priority	= "1003"
-	#	match {
-	#		versioned_expr	= "SRC_IPS_V1"
-	#		config {
-	#			src_ip_ranges	= "${var.admin-office-ip-address-range}"
-	#		}
-	#	}
-	# }
+    # Keep normal security logging. Verbose logging can include matched
+    # request content and should be enabled deliberately for diagnostics.
+    log_level = "NORMAL"
+  }
 
-	# rule {
-	#	description	= "Default rule. Deny all access to Load Balancer"
-	#	action		= "deny(403)"
-	#	priority	= "2147483647"
-	#	match {
-	#		versioned_expr	= "SRC_IPS_V1"
-	#		config {
-	#			src_ip_ranges	= ["*"]
-	#		}
-	#	}
-	# }
+  # SQL injection.
+  rule {
+    description = "Block SQL injection signatures at sensitivity 4"
+    action      = "deny(403)"
+    priority    = 1000
+    preview     = false
 
-	rule {
-		description	= "Default rule. Deny all access to Load Balancer"
-		action		= "allow"
-		priority	= "2147483647"
-		match {
-			versioned_expr	= "SRC_IPS_V1"
-			config {
-				src_ip_ranges	= ["*"]
-			}
-		}
-	}
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('sqli-v422-stable', {'sensitivity': 4})"
+      }
+    }
+  }
 
+  # Cross-site scripting.
+  rule {
+    description = "Block cross-site scripting signatures at sensitivity 4"
+    action      = "deny(403)"
+    priority    = 1010
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('xss-v422-stable', {'sensitivity': 4})"
+      }
+    }
+  }
+
+  # Local file inclusion and path traversal.
+  rule {
+    description = "Block local file inclusion signatures at sensitivity 4"
+    action      = "deny(403)"
+    priority    = 1020
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('lfi-v422-stable', {'sensitivity': 4})"
+      }
+    }
+  }
+
+  # Remote file inclusion.
+  rule {
+    description = "Block remote file inclusion signatures at sensitivity 4"
+    action      = "deny(403)"
+    priority    = 1030
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('rfi-v422-stable', {'sensitivity': 4})"
+      }
+    }
+  }
+
+  # Remote code execution.
+  rule {
+    description = "Block remote code execution signatures at sensitivity 4"
+    action      = "deny(403)"
+    priority    = 1040
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('rce-v422-stable', {'sensitivity': 4})"
+      }
+    }
+  }
+
+  # HTTP protocol attacks.
+  rule {
+    description = "Block protocol attack signatures at sensitivity 4"
+    action      = "deny(403)"
+    priority    = 1050
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('protocolattack-v422-stable', {'sensitivity': 4})"
+      }
+    }
+  }
+
+  # PHP injection attacks.
+  rule {
+    description = "Block PHP attack signatures at sensitivity 4"
+    action      = "deny(403)"
+    priority    = 1060
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('php-v422-stable', {'sensitivity': 4})"
+      }
+    }
+  }
+
+  # Session fixation.
+  rule {
+    description = "Block session fixation signatures at sensitivity 4"
+    action      = "deny(403)"
+    priority    = 1070
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('sessionfixation-v422-stable', {'sensitivity': 4})"
+      }
+    }
+  }
+
+  # Java attack signatures are included for complete CRS family coverage.
+  rule {
+    description = "Block Java attack signatures at sensitivity 4"
+    action      = "deny(403)"
+    priority    = 1080
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('java-v422-stable', {'sensitivity': 4})"
+      }
+    }
+  }
+
+  # CRS 4.22 uses the generic family for coverage previously associated
+  # with the Node.js family, together with additional generic signatures.
+  rule {
+    description = "Block generic attack signatures at sensitivity 4"
+    action      = "deny(403)"
+    priority    = 1090
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('generic-v422-stable', {'sensitivity': 4})"
+      }
+    }
+  }
+
+  # Apply the method policy implemented by the preconfigured ruleset.
+  rule {
+    description = "Block method enforcement signatures at sensitivity 4"
+    action      = "deny(403)"
+    priority    = 1100
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('methodenforcement-v422-stable', {'sensitivity': 4})"
+      }
+    }
+  }
+
+  # These signatures can match authorized scanners and generic HTTP clients.
+  # Include workshop tools and DAST scanners in functional testing.
+  rule {
+    description = "Block scanner detection signatures at sensitivity 4"
+    action      = "deny(403)"
+    priority    = 1110
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('scannerdetection-v422-stable', {'sensitivity': 4})"
+      }
+    }
+  }
+
+  # Google's separately maintained CVE rules include Log4Shell protection.
+  #
+  # Omitting the optional parameter map uses the default sensitivity 4.
+  # Keep this standalone expression so Checkov CKV_GCP_73 can recognize
+  # the enforced protection.
+  rule {
+    description = "Block all signatures in Google's CVE ruleset"
+    action      = "deny(403)"
+    priority    = 1120
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('cve-canary')"
+      }
+    }
+  }
+
+  # Enable the documented JSON SQL injection signature.
+  # Sensitivity 0 begins with an empty set; opt_in_rule_ids selects it.
+  rule {
+    description = "Block the JSON SQL injection signature"
+    action      = "deny(403)"
+    priority    = 1130
+    preview     = false
+
+    match {
+      expr {
+        expression = "evaluatePreconfiguredWaf('json-sqli-canary', {'sensitivity': 0, 'opt_in_rule_ids': ['owasp-crs-id942550-sqli']})"
+      }
+    }
+  }
+
+  # Dragonfly intentionally accepts anonymous workshop attendees.
+  # This mandatory final rule allows requests that passed the WAF checks.
+  rule {
+    description = "Allow requests that did not match an earlier blocking rule"
+    action      = "allow"
+    priority    = 2147483647
+    preview     = false
+
+    match {
+      versioned_expr = "SRC_IPS_V1"
+
+      config {
+        src_ip_ranges = ["*"]
+      }
+    }
+  }
 }
